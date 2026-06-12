@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MADHAN_KUMAR :: root@portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;700;800&family=Oxanium:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070a09;
+    --bg2:#0c1210;
+    --panel:#0d1512;
+    --line:#15241f;
+    --green:#39ff8d;
+    --green-dim:#1f7a4d;
+    --cyan:#5ef3ff;
+    --amber:#ffb454;
+    --text:#cfe8db;
+    --text-dim:#6f9484;
+    --mono:'JetBrains Mono', monospace;
+    --display:'Bebas Neue', sans-serif;
+    --ox:'Oxanium', sans-serif;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--mono);
+    overflow-x:hidden;
+  }
+
+  ::selection{background:var(--green);color:#000;}
+
+  /* scrollbar */
+  ::-webkit-scrollbar{width:10px;}
+  ::-webkit-scrollbar-track{background:var(--bg2);}
+  ::-webkit-scrollbar-thumb{background:var(--green-dim);border:1px solid var(--green);}
+
+  /* ============ BOOT SCREEN ============ */
+  #boot{
+    position:fixed;inset:0;
+    background:#000;
+    color:var(--green);
+    z-index:9999;
+    font-family:var(--mono);
+    padding:30px 40px;
+    font-size:13px;
+    line-height:1.7;
+    overflow:hidden;
+    transition:opacity .6s ease, visibility .6s ease;
+  }
+  #boot.hide{opacity:0;visibility:hidden;}
+  #boot .line{opacity:0;animation:bootIn .15s forwards;white-space:pre-wrap;}
+  @keyframes bootIn{to{opacity:1;}}
+  #boot .ok{color:var(--cyan);}
+  #boot .warn{color:var(--amber);}
+  #boot .bar{
+    display:inline-block;width:200px;height:10px;border:1px solid var(--green);
+    margin-left:10px;position:relative;vertical-align:middle;
+  }
+  #boot .bar::after{
+    content:'';position:absolute;left:0;top:0;bottom:0;
+    width:0%;background:var(--green);
+    animation:loadBar 1.6s ease forwards;
+    animation-delay:1.4s;
+  }
+  @keyframes loadBar{to{width:100%;}}
+  #boot .cursor-blink{
+    display:inline-block;width:9px;height:16px;background:var(--green);
+    animation:blink 1s steps(1) infinite;vertical-align:middle;margin-left:4px;
+  }
+  @keyframes blink{50%{opacity:0;}}
+  #boot .scan{
+    position:absolute;left:0;right:0;height:2px;background:rgba(57,255,141,.08);
+    animation:scanmove 4s linear infinite;
+  }
+  @keyframes scanmove{from{top:-2px;}to{top:100%;}}
+
+  /* ============ GLOBAL SCANLINE / NOISE ============ */
+  .crt-overlay{
+    pointer-events:none;position:fixed;inset:0;z-index:50;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,255,150,0.015) 3px,
+      rgba(0,0,0,0) 4px
+    );
+    mix-blend-mode:overlay;
+  }
+  .vignette{
+    pointer-events:none;position:fixed;inset:0;z-index:49;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.65) 100%);
+  }
+
+  /* ============ NAVBAR ============ */
+  nav{
+    position:sticky;top:0;z-index:100;
+    background:rgba(7,10,9,.85);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 24px;
+    font-family:var(--ox);
+  }
+  .nav-left{display:flex;align-items:center;gap:10px;}
+  .dots{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;}
+  .dot.red{background:#ff5f56;}
+  .dot.yellow{background:#ffbd2e;}
+  .dot.green{background:#27c93f;}
+  .nav-title{
+    color:var(--green);
+    font-weight:700;letter-spacing:2px;font-size:13px;
+    margin-left:10px;
+  }
+  .nav-title span{color:var(--text-dim);}
+  .nav-links{
+    display:flex;gap:22px;align-items:center;
+    font-size:12px;letter-spacing:1px;
+  }
+  .nav-links a{
+    color:var(--text-dim);text-decoration:none;
+    transition:color .2s, text-shadow .2s;
+    position:relative;
+  }
+  .nav-links a::before{content:'/';color:var(--green-dim);margin-right:4px;}
+  .nav-links a:hover{color:var(--cyan);text-shadow:0 0 8px var(--cyan);}
+  .nav-clock{
+    color:var(--amber);
+    font-family:var(--mono);
+    font-size:12px;
+    border:1px solid var(--line);
+    padding:5px 10px;border-radius:3px;
+    background:var(--panel);
+    white-space:nowrap;
+  }
+  .nav-clock .lab{color:var(--text-dim);margin-right:6px;}
+
+  @media(max-width:800px){
+    .nav-links{display:none;}
+  }
+
+  /* ============ SECTION SHARED ============ */
+  section{
+    padding:80px 6vw;
+    position:relative;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    color:var(--green);
+    font-size:12px;
+    letter-spacing:4px;
+    text-transform:uppercase;
+    margin-bottom:14px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:'$';color:var(--cyan);}
+  .eyebrow::after{
+    content:'';flex:1;height:1px;
+    background:linear-gradient(to right, var(--line), transparent);
+  }
+  .section-title{
+    font-family:var(--display);
+    font-size:clamp(2rem,5vw,3.4rem);
+    letter-spacing:3px;
+    color:var(--text);
+    margin-bottom:30px;
+    text-transform:uppercase;
+  }
+  .section-title .accent{color:var(--green);}
+
+  /* ============ HERO ============ */
+  .hero{
+    min-height:92vh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding-top:60px;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(57,255,141,.08), transparent 60%),
+      linear-gradient(180deg, var(--bg) 0%, #060807 100%);
+    border-bottom:1px solid var(--line);
+  }
+  .hero-tag{
+    font-family:var(--mono);color:var(--cyan);font-size:13px;
+    letter-spacing:3px;margin-bottom:18px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .hero-tag .blip{
+    width:8px;height:8px;background:var(--green);border-radius:50%;
+    box-shadow:0 0 10px var(--green);
+    animation:blink 1.4s infinite;
+  }
+  .glitch-wrap{position:relative;margin-bottom:10px;}
+  .glitch{
+    font-family:var(--display);
+    font-size:clamp(3rem,11vw,8.5rem);
+    line-height:.95;
+    letter-spacing:4px;
+    color:var(--text);
+    text-transform:uppercase;
+    position:relative;
+    text-shadow:0 0 25px rgba(57,255,141,.25);
+  }
+  .glitch span{display:block;}
+  .glitch::before,.glitch::after{
+    content:attr(data-text);
+    position:absolute;left:0;top:0;width:100%;
+    overflow:hidden;
+  }
+  .glitch::before{
+    color:var(--cyan);
+    clip-path:inset(0 0 60% 0);
+    transform:translate(-3px,-2px);
+    animation:glitchTop 4.5s infinite linear;
+    mix-blend-mode:screen;
+  }
+  .glitch::after{
+    color:var(--amber);
+    clip-path:inset(60% 0 0 0);
+    transform:translate(3px,2px);
+    animation:glitchBottom 4.5s infinite linear;
+    mix-blend-mode:screen;
+  }
+  @keyframes glitchTop{
+    0%,92%{transform:translate(-3px,-2px);opacity:.7;}
+    93%{transform:translate(6px,-2px) skewX(10deg);opacity:1;}
+    94%{transform:translate(-8px,2px);opacity:.4;}
+    95%{transform:translate(2px,-1px);opacity:.8;}
+    96%,100%{transform:translate(-3px,-2px);opacity:.7;}
+  }
+  @keyframes glitchBottom{
+    0%,90%{transform:translate(3px,2px);opacity:.6;}
+    91%{transform:translate(-6px,1px) skewX(-8deg);opacity:1;}
+    92%{transform:translate(7px,-2px);opacity:.4;}
+    94%{transform:translate(-2px,2px);opacity:.8;}
+    96%,100%{transform:translate(3px,2px);opacity:.6;}
+  }
+  .role-line{
+    font-family:var(--ox);font-weight:700;
+    font-size:clamp(1rem,2.4vw,1.6rem);
+    color:var(--green);
+    letter-spacing:2px;
+    margin:18px 0 28px;
+  }
+  .role-line .cursor{
+    display:inline-block;width:.55em;height:1em;background:var(--green);
+    margin-left:6px;vertical-align:-2px;
+    animation:blink 1s steps(1) infinite;
+  }
+
+  .terminal{
+    margin-top:10px;
+    max-width:680px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    box-shadow:0 0 0 1px rgba(57,255,141,.05), 0 20px 60px -20px rgba(0,0,0,.8);
+    overflow:hidden;
+  }
+  .terminal-head{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 12px;
+    background:#0a120f;
+    border-bottom:1px solid var(--line);
+    font-family:var(--ox);font-size:11px;color:var(--text-dim);
+    letter-spacing:1px;
+  }
+  .terminal-body{
+    padding:16px 18px;
+    font-size:13px;
+    line-height:1.9;
+    min-height:140px;
+  }
+  .terminal-body .prompt{color:var(--cyan);}
+  .terminal-body .out{color:var(--text-dim);}
+  .terminal-body .ok{color:var(--green);}
+  #typing-line::after{
+    content:'';display:inline-block;width:8px;height:14px;
+    background:var(--green);margin-left:4px;vertical-align:-2px;
+    animation:blink .9s steps(1) infinite;
+  }
+
+  .hero-stats{
+    display:flex;gap:30px;margin-top:36px;flex-wrap:wrap;
+    font-family:var(--ox);
+  }
+  .hstat b{
+    display:block;font-family:var(--display);font-size:1.8rem;color:var(--cyan);
+    letter-spacing:1px;
+  }
+  .hstat span{font-size:11px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;}
+
+  /* ============ SKILLS ============ */
+  .skills-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+  }
+  .skill-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:20px;
+    position:relative;
+    transition:transform .25s, border-color .25s, box-shadow .25s;
+    overflow:hidden;
+  }
+  .skill-card::before{
+    content:'';position:absolute;top:0;left:0;width:100%;height:2px;
+    background:linear-gradient(to right, var(--green), transparent);
+    opacity:.6;
+  }
+  .skill-card:hover{
+    transform:translateY(-4px);
+    border-color:var(--green-dim);
+    box-shadow:0 10px 30px -15px rgba(57,255,141,.4);
+  }
+  .skill-head{
+    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;
+  }
+  .skill-name{font-family:var(--ox);font-weight:700;font-size:14px;letter-spacing:1px;color:var(--text);}
+  .skill-pct{font-size:11px;color:var(--amber);}
+  .skill-bar{
+    height:6px;border-radius:3px;background:#0a1411;
+    border:1px solid var(--line);overflow:hidden;margin-bottom:10px;
+  }
+  .skill-bar i{
+    display:block;height:100%;
+    background:linear-gradient(to right, var(--green-dim), var(--green));
+    width:0%;
+    transition:width 1.4s cubic-bezier(.2,.8,.2,1);
+  }
+  .skill-card.visible .skill-bar i{width:var(--w);}
+  .skill-desc{font-size:11px;color:var(--text-dim);line-height:1.6;}
+
+  /* ============ EXPERIENCE TIMELINE ============ */
+  .timeline{position:relative;padding-left:32px;}
+  .timeline::before{
+    content:'';position:absolute;left:6px;top:6px;bottom:6px;width:1px;
+    background:linear-gradient(to bottom, var(--green), var(--line) 80%);
+  }
+  .tl-item{position:relative;padding-bottom:42px;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-dot{
+    position:absolute;left:-32px;top:4px;width:13px;height:13px;
+    border:2px solid var(--green);border-radius:50%;
+    background:var(--bg);
+    box-shadow:0 0 12px rgba(57,255,141,.6);
+  }
+  .tl-meta{
+    font-family:var(--mono);font-size:11px;color:var(--cyan);
+    letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;
+  }
+  .tl-title{
+    font-family:var(--ox);font-weight:800;font-size:1.2rem;color:var(--text);
+    margin-bottom:6px;
+  }
+  .tl-title .at{color:var(--amber);font-weight:600;}
+  .tl-desc{font-size:13px;color:var(--text-dim);max-width:680px;line-height:1.8;}
+  .tl-tags{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;}
+  .tl-tags span{
+    font-size:10px;letter-spacing:1px;color:var(--green);
+    border:1px solid var(--green-dim);padding:3px 8px;border-radius:3px;
+    background:rgba(57,255,141,.05);
+  }
+
+  /* ============ PROJECTS ============ */
+  .projects-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:22px;
+  }
+  .project-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    overflow:hidden;display:flex;flex-direction:column;
+    transition:border-color .25s, transform .25s;
+  }
+  .project-card:hover{border-color:var(--cyan);transform:translateY(-4px);}
+  .project-top{
+    padding:14px 18px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--mono);font-size:11px;color:var(--text-dim);
+  }
+  .project-top .tag{
+    color:var(--bg);background:var(--green);
+    padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:1px;
+  }
+  .project-top .tag.amber{background:var(--amber);}
+  .project-top .tag.cyan{background:var(--cyan);}
+  .project-body{padding:20px;flex:1;display:flex;flex-direction:column;}
+  .project-title{
+    font-family:var(--ox);font-weight:800;font-size:1.15rem;
+    margin-bottom:10px;color:var(--text);
+  }
+  .project-desc{font-size:12.5px;color:var(--text-dim);line-height:1.8;flex:1;}
+  .project-foot{
+    margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;
+  }
+  .project-foot span{
+    font-size:10px;border:1px solid var(--line);padding:3px 8px;border-radius:3px;
+    color:var(--text-dim);letter-spacing:1px;
+  }
+
+  /* ============ CONTACT ============ */
+  .contact-grid{
+    display:grid;grid-template-columns:1fr 1.2fr;gap:34px;
+  }
+  @media(max-width:900px){.contact-grid{grid-template-columns:1fr;}}
+  .contact-info p{font-size:13px;color:var(--text-dim);line-height:2;}
+  .contact-info a{color:var(--cyan);text-decoration:none;}
+  .contact-info a:hover{text-shadow:0 0 8px var(--cyan);}
+  .info-row{
+    display:flex;gap:10px;font-size:13px;margin-bottom:6px;
+  }
+  .info-row .lab{color:var(--green);min-width:90px;}
+
+  .term-window{
+    background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    box-shadow:0 0 0 1px rgba(94,243,255,.05);
+    overflow:hidden;
+  }
+  .term-window .terminal-head{justify-content:space-between;}
+  #console{
+    height:300px;overflow-y:auto;padding:14px 16px;font-size:12.5px;line-height:1.8;
+  }
+  #console .line{margin-bottom:4px;white-space:pre-wrap;word-break:break-word;}
+  #console .prompt{color:var(--cyan);}
+  #console .resp{color:var(--green);}
+  #console .err{color:var(--amber);}
+  .term-input-row{
+    display:flex;align-items:center;border-top:1px solid var(--line);
+    padding:10px 16px;background:#0a120f;
+  }
+  .term-input-row .prompt{color:var(--cyan);margin-right:8px;font-size:13px;}
+  .term-input-row input{
+    flex:1;background:none;border:none;outline:none;
+    color:var(--text);font-family:var(--mono);font-size:13px;
+  }
+  .term-hint{font-size:10px;color:var(--text-dim);margin-top:10px;letter-spacing:1px;}
+
+  footer{
+    text-align:center;padding:30px;font-size:11px;color:var(--text-dim);
+    letter-spacing:2px;font-family:var(--mono);
+  }
+  footer span{color:var(--green);}
+
+  /* fade-in utility */
+  .fade-up{opacity:0;transform:translateY(24px);transition:opacity .7s ease, transform .7s ease;}
+  .fade-up.visible{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- ===================== BOOT SCREEN ===================== -->
+<div id="boot">
+  <div class="scan"></div>
+  <div id="boot-lines"></div>
+</div>
+
+<div class="crt-overlay"></div>
+<div class="vignette"></div>
+
+<!-- ===================== NAVBAR ===================== -->
+<nav>
+  <div class="nav-left">
+    <div class="dots">
+      <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+    </div>
+    <div class="nav-title">MADHAN_KUMAR<span>@portfolio:~$</span></div>
+  </div>
+  <div class="nav-links">
+    <a href="#hero">home</a>
+    <a href="#skills">skills</a>
+    <a href="#experience">exp</a>
+    <a href="#projects">projects</a>
+    <a href="#contact">contact</a>
+  </div>
+  <div class="nav-clock"><span class="lab">SYS_TIME</span><span id="clock">--:--:--</span></div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero">
+  <div class="hero-tag"><span class="blip"></span> SYSTEM ONLINE // RANIPET, INDIA // UPTIME: 21yrs</div>
+  <div class="glitch-wrap">
+    <h1 class="glitch" data-text="MADHAN KUMAR"><span>MADHAN KUMAR</span></h1>
+  </div>
+  <div class="role-line">DATA ANALYST &amp; BUSINESS INTELLIGENCE ENGINEER<span class="cursor"></span></div>
+
+  <div class="terminal">
+    <div class="terminal-head">
+      <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+      &nbsp;bash — whoami.sh
+    </div>
+    <div class="terminal-body">
+      <div><span class="prompt">root@madhan</span>:~$ ./whoami.sh</div>
+      <div class="out" id="typing-line"></div>
+      <div class="out">› status: <span class="ok">open to opportunities</span></div>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hstat"><b>1mo+</b><span>BI Internship</span></div>
+    <div class="hstat"><b>1</b><span>Published Paper</span></div>
+    <div class="hstat"><b>FINALIST</b><span>Infosys Techzooka '25</span></div>
+    <div class="hstat"><b>3</b><span>Languages</span></div>
+  </div>
+</section>
+
+<!-- ===================== SKILLS ===================== -->
+<section id="skills">
+  <div class="eyebrow">module: skillset.json</div>
+  <h2 class="section-title">CORE <span class="accent">SKILLS</span></h2>
+  <div class="skills-grid">
+
+    <div class="skill-card" style="--w:92%">
+      <div class="skill-head"><span class="skill-name">Data Visualization</span><span class="skill-pct">92%</span></div>
+      <div class="skill-bar"><i></i></div>
+      <div class="skill-desc">Power BI, Tableau & dashboarding — turning raw rows into stories stakeholders act on.</div>
+    </div>
+
+    <div class="skill-card" style="--w:88%">
+      <div class="skill-head"><span class="skill-name">Spreadsheet Modeling</span><span class="skill-pct">88%</span></div>
+      <div class="skill-bar"><i></i></div>
+      <div class="skill-desc">Advanced Excel & Google Sheets — pivot tables, lookups, automation & reporting templates.</div>
+    </div>
+
+    <div class="skill-card" style="--w:85%">
+      <div class="skill-head"><span class="skill-name">Business Intelligence</span><span class="skill-pct">85%</span></div>
+      <div class="skill-bar"><i></i></div>
+      <div class="skill-desc">Trend analysis, KPI tracking & decision-support reporting for ops teams.</div>
+    </div>
+
+    <div class="skill-card" style="--w:80%">
+      <div class="skill-head"><span class="skill-name">Data Cleaning & ETL</span><span class="skill-pct">80%</span></div>
+      <div class="skill-bar"><i></i></div>
+      <div class="skill-desc">Collection, validation & transformation of messy datasets into analysis-ready form.</div>
+    </div>
+
+    <div class="skill-card" style="--w:75%">
+      <div class="skill-head"><span class="skill-name">Statistical Analysis</span><span class="skill-pct">75%</span></div>
+      <div class="skill-bar"><i></i></div>
+      <div class="skill-desc">Descriptive stats, hypothesis-driven exploration & model evaluation fundamentals.</div>
+    </div>
+
+    <div class="skill-card" style="--w:78%">
+      <div class="skill-head"><span class="skill-name">AI / ML Foundations</span><span class="skill-pct">78%</span></div>
+      <div class="skill-bar"><i></i></div>
+      <div class="skill-desc">ANN, PSO & predictive modeling — applied through research & hackathon builds.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===================== EXPERIENCE ===================== -->
+<section id="experience">
+  <div class="eyebrow">module: experience.log</div>
+  <h2 class="section-title">EXPERIENCE <span class="accent">&amp; EDUCATION</span></h2>
+
+  <div class="timeline">
+    <div class="tl-item fade-up">
+      <div class="tl-dot"></div>
+      <div class="tl-meta">2025 — Internship</div>
+      <div class="tl-title">Data Analyst <span class="at">@ Smart Entry IT Infrastructure</span></div>
+      <div class="tl-desc">
+        One-month hands-on internship covering the full analyst workflow: data collection,
+        cleaning, visualization and basic statistical analysis to support real business decisions.
+      </div>
+      <div class="tl-tags"><span>data cleaning</span><span>visualization</span><span>reporting</span></div>
+    </div>
+
+    <div class="tl-item fade-up">
+      <div class="tl-dot"></div>
+      <div class="tl-meta">April 2025 — Hackathon</div>
+      <div class="tl-title">Finalist — MedAssist-AI <span class="at">@ PALS-Infosys Techzooka 2025</span></div>
+      <div class="tl-desc">
+        Built and presented a technology-driven healthcare solution at a national-level hackathon,
+        recognized for creativity, technical execution and teamwork against numerous teams.
+      </div>
+      <div class="tl-tags"><span>national finalist</span><span>teamwork</span><span>healthcare AI</span></div>
+    </div>
+
+    <div class="tl-item fade-up">
+      <div class="tl-dot"></div>
+      <div class="tl-meta">April 2025 — Publication</div>
+      <div class="tl-title">Research Paper — IRJIET <span class="at">"Heart Disease Prediction Using ANN & PSO"</span></div>
+      <div class="tl-desc">
+        Published in the International Research Journal of Innovations in Engineering &amp; Technology,
+        Volume 9, Special Issue of INSPIRE'25.
+      </div>
+      <div class="tl-tags"><span>ANN</span><span>PSO</span><span>research</span></div>
+    </div>
+
+    <div class="tl-item fade-up">
+      <div class="tl-dot"></div>
+      <div class="tl-meta">2023 — Present</div>
+      <div class="tl-title">B.Tech, AI &amp; Data Science <span class="at">@ GRT IET, Anna University</span></div>
+      <div class="tl-desc">
+        Undergraduate degree in Artificial Intelligence and Data Science — expected April 2027.
+      </div>
+      <div class="tl-tags"><span>AI &amp; DS</span><span>Anna University</span></div>
+    </div>
+
+    <div class="tl-item fade-up">
+      <div class="tl-dot"></div>
+      <div class="tl-meta">2024 — Award</div>
+      <div class="tl-title">2nd Prize — ERUDITION-24 <span class="at">Technical Paper Presentation</span></div>
+      <div class="tl-desc">
+        Secured 2nd Prize for a national-level paper presentation on "Recent Trends in Physics",
+        demonstrating strong research, analytical &amp; presentation skills.
+      </div>
+      <div class="tl-tags"><span>research</span><span>presentation</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROJECTS ===================== -->
+<section id="projects">
+  <div class="eyebrow">module: projects.dir</div>
+  <h2 class="section-title">FEATURED <span class="accent">PROJECTS</span></h2>
+
+  <div class="projects-grid">
+
+    <div class="project-card fade-up">
+      <div class="project-top"><span>./medassist-ai</span><span class="tag">FINALIST</span></div>
+      <div class="project-body">
+        <div class="project-title">MedAssist-AI</div>
+        <div class="project-desc">
+          A healthcare-focused AI prototype built during the PALS-Infosys Techzooka 2025 national
+          hackathon. Presented an end-to-end solution combining data-driven insight with a
+          user-facing assistant concept, earning a Finalist placement among numerous teams.
+        </div>
+        <div class="project-foot"><span>Hackathon</span><span>AI Prototype</span><span>Team Build</span></div>
+      </div>
+    </div>
+
+    <div class="project-card fade-up">
+      <div class="project-top"><span>./heart-disease-ann-pso</span><span class="tag amber">RESEARCH</span></div>
+      <div class="project-body">
+        <div class="project-title">Heart Disease Prediction — ANN &amp; PSO</div>
+        <div class="project-desc">
+          Research project applying Artificial Neural Networks optimized with Particle Swarm
+          Optimization to predict heart disease risk from patient data. Published in IRJIET,
+          Volume 9, Special Issue of INSPIRE'25 (April 2025).
+        </div>
+        <div class="project-foot"><span>ANN</span><span>PSO</span><span>Published Paper</span></div>
+      </div>
+    </div>
+
+    <div class="project-card fade-up">
+      <div class="project-top"><span>./maddyfx-portfolio</span><span class="tag cyan">LIVE</span></div>
+      <div class="project-body">
+        <div class="project-title">Personal Portfolio — maddyfx</div>
+        <div class="project-desc">
+          Live portfolio site showcasing analytics work, case studies and contact channels —
+          continuously updated as new projects and dashboards are shipped.
+        </div>
+        <div class="project-foot"><span>Web</span><span><a href="https://maddyfx.lovable.app" style="color:var(--cyan);text-decoration:none">maddyfx.lovable.app</a></span></div>
+      </div>
+    </div>
+
+    <div class="project-card fade-up">
+      <div class="project-top"><span>./bi-dashboards</span><span class="tag">ONGOING</span></div>
+      <div class="project-body">
+        <div class="project-title">Business Insight Dashboards</div>
+        <div class="project-desc">
+          Recurring practice builds: interactive dashboards covering sales trends, operational
+          KPIs and cleaned datasets — sharpening visualization and BI tooling skills.
+        </div>
+        <div class="project-foot"><span>Power BI</span><span>Excel</span><span>KPI Tracking</span></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===================== CONTACT ===================== -->
+<section id="contact">
+  <div class="eyebrow">module: contact.sh</div>
+  <h2 class="section-title">GET IN <span class="accent">TOUCH</span></h2>
+
+  <div class="contact-grid">
+    <div class="contact-info">
+      <div class="info-row"><span class="lab">LOCATION</span><span>Ranipet, Tamil Nadu, India</span></div>
+      <div class="info-row"><span class="lab">PHONE</span><span>+91 8124016941</span></div>
+      <div class="info-row"><span class="lab">EMAIL</span><span><a href="mailto:maddyfx006@gmail.com">maddyfx006@gmail.com</a></span></div>
+      <div class="info-row"><span class="lab">LINKEDIN</span><span><a href="https://www.linkedin.com/in/madhan-analyst" target="_blank">linkedin.com/in/madhan-analyst</a></span></div>
+      <div class="info-row"><span class="lab">PORTFOLIO</span><span><a href="https://maddyfx.lovable.app" target="_blank">maddyfx.lovable.app</a></span></div>
+      <div class="info-row"><span class="lab">LANGUAGES</span><span>Tamil · English · Hindi</span></div>
+      <p style="margin-top:18px;">Type <span style="color:var(--green)">help</span> in the terminal for available commands,
+      or try <span style="color:var(--green)">contact</span>, <span style="color:var(--green)">skills</span>, <span style="color:var(--green)">resume</span>.</p>
+    </div>
+
+    <div class="term-window">
+      <div class="terminal-head">
+        <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+        &nbsp;bash — contact_shell
+      </div>
+      <div id="console"></div>
+      <div class="term-input-row">
+        <span class="prompt">guest@madhan:~$</span>
+        <input type="text" id="term-input" autocomplete="off" spellcheck="false" placeholder="type 'help' and press enter">
+      </div>
+    </div>
+  </div>
+  <div class="term-hint">TIP: try "help", "contact", "skills", "projects", "resume", "whoami", "clear", "sudo"</div>
+</section>
+
+<footer>
+  <span>root@madhan</span> :: built with HTML / CSS / JS — terminal aesthetic by Madhan Kumar — © 2026
+</footer>
+
+<script>
+/* ===================== BOOT SEQUENCE ===================== */
+const bootLog = [
+  "BIOS Version 4.06.MK — Madhan Kumar Analytics Systems",
+  "Copyright (C) 2026, All Rights Reserved",
+  "",
+  "CPU: Intelligence Core i9 @ 4.2GHz — OK",
+  "Memory Test: 65536MB <span class='ok'>PASS</span>",
+  "Detecting Primary Drive ... <span class='ok'>SSD::ANALYTICS_DATA OK</span>",
+  "Detecting Secondary Drive ... <span class='ok'>SSD::PROJECTS OK</span>",
+  "",
+  "Loading kernel modules:",
+  "  [ <span class='ok'>OK</span> ] data-visualization.ko",
+  "  [ <span class='ok'>OK</span> ] business-intelligence.ko",
+  "  [ <span class='ok'>OK</span> ] spreadsheet-engine.ko",
+  "  [ <span class='warn'>WARN</span> ] caffeine-levels.ko — low, refilling...",
+  "",
+  "Mounting filesystems ... <span class='ok'>done</span>",
+  "Starting network services ... <span class='ok'>done</span>",
+  "Initializing user session: <span class='ok'>madhan_kumar</span>",
+  "",
+  "LOADING PORTFOLIO <span class='bar'></span>",
+];
+
+const bootContainer = document.getElementById('boot-lines');
+let bd = 0;
+bootLog.forEach((l, i) => {
+  setTimeout(() => {
+    const div = document.createElement('div');
+    div.className = 'line';
+    div.innerHTML = l + (i === bootLog.length - 1 ? '' : '');
+    bootContainer.appendChild(div);
+  }, bd);
+  bd += 90;
+});
+
+setTimeout(() => {
+  document.getElementById('boot').classList.add('hide');
+  setTimeout(()=> document.getElementById('boot').remove(), 700);
+}, bd + 1900);
+
+/* ===================== LIVE CLOCK ===================== */
+function updateClock(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${hh}:${mm}:${ss}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* ===================== HERO TYPING EFFECT ===================== */
+const typingTarget = document.getElementById('typing-line');
+const typingStrings = [
+  "› name: Madhan Kumar — Data Analyst / BI Analyst",
+  "› based_in: Ranipet, India",
+  "› focus: dashboards, insights, automation",
+  "› currently: B.Tech AI & Data Science, Anna University ('27)"
+];
+let tsIndex = 0, tcIndex = 0, deleting = false;
+
+function typeLoop(){
+  const current = typingStrings[tsIndex];
+  if(!deleting){
+    tcIndex++;
+    typingTarget.textContent = current.slice(0, tcIndex);
+    if(tcIndex === current.length){
+      deleting = true;
+      setTimeout(typeLoop, 1600);
+      return;
+    }
+  } else {
+    tcIndex--;
+    typingTarget.textContent = current.slice(0, tcIndex);
+    if(tcIndex === 0){
+      deleting = false;
+      tsIndex = (tsIndex + 1) % typingStrings.length;
+    }
+  }
+  setTimeout(typeLoop, deleting ? 28 : 45);
+}
+setTimeout(typeLoop, bd + 2100);
+
+/* ===================== SCROLL REVEAL ===================== */
+const revealEls = document.querySelectorAll('.fade-up, .skill-card');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.2 });
+revealEls.forEach(el => observer.observe(el));
+
+/* ===================== CONTACT TERMINAL ===================== */
+const consoleEl = document.getElementById('console');
+const termInput = document.getElementById('term-input');
+
+const responses = {
+  help: `Available commands:
+  help      — show this list
+  whoami    — about Madhan
+  skills    — list core skills
+  experience— show work history
+  projects  — list featured projects
+  contact   — show contact details
+  resume    — open LinkedIn / portfolio links
+  sudo      — try it ;)
+  clear     — clear the screen`,
+
+  whoami: `Madhan Kumar — Business Intelligence Analyst based in Ranipet, India.
+Converts complex data into actionable insights, with hands-on
+experience in dashboards, reporting & cross-team collaboration.`,
+
+  skills: `Data Visualization ████████████░░ 92%
+Spreadsheet Modeling ███████████░░░ 88%
+Business Intelligence ██████████░░░░ 85%
+Data Cleaning / ETL ████████░░░░░░ 80%
+AI / ML Foundations █████████░░░░░ 78%`,
+
+  experience: `[2025] Data Analyst Intern — Smart Entry IT Infrastructure
+[2025] Finalist — MedAssist-AI, PALS-Infosys Techzooka Hackathon
+[2025] Published — "Heart Disease Prediction Using ANN & PSO" (IRJIET)
+[2023-2027] B.Tech AI & Data Science — GRT IET, Anna University`,
+
+  projects: `1. MedAssist-AI            — Hackathon Finalist build
+2. Heart Disease ANN & PSO — Published research paper
+3. maddyfx Portfolio       — maddyfx.lovable.app
+4. BI Dashboards           — ongoing Power BI / Excel work`,
+
+  contact: `Email   : maddyfx006@gmail.com
+Phone   : +91 8124016941
+LinkedIn: linkedin.com/in/madhan-analyst
+Site    : maddyfx.lovable.app
+Location: Ranipet, India`,
+
+  resume: `Opening links...
+> LinkedIn : https://www.linkedin.com/in/madhan-analyst
+> Portfolio: https://maddyfx.lovable.app`,
+
+  sudo: `Permission denied: nice try. This terminal runs as 'guest'.
+Madhan retains root access. :)`,
+};
+
+function printLine(text, cls){
+  const div = document.createElement('div');
+  div.className = 'line' + (cls ? ' ' + cls : '');
+  div.textContent = text;
+  consoleEl.appendChild(div);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+
+function printBlock(text, cls){
+  text.split('\\n').forEach(line => printLine(line, cls));
+}
+
+// boot message inside the console
+printLine("Welcome to madhan@portfolio terminal v1.0", "resp");
+printLine("Type 'help' to see available commands.", "resp");
+
+termInput.addEventListener('keydown', (e) => {
+  if(e.key !== 'Enter') return;
+  const raw = termInput.value.trim();
+  if(raw === ''){ return; }
+  printLine('guest@madhan:~$ ' + raw, 'prompt');
+
+  const cmd = raw.toLowerCase();
+
+  if(cmd === 'clear'){
+    consoleEl.innerHTML = '';
+  } else if(responses[cmd]){
+    printBlock(responses[cmd], 'resp');
+  } else if(cmd.startsWith('echo ')){
+    printLine(raw.slice(5), 'resp');
+  } else {
+    printLine(`command not found: ${raw}`, 'err');
+    printLine(`type 'help' for a list of commands`, 'err');
+  }
+  termInput.value = '';
+});
+
+// focus terminal on click anywhere in window
+document.querySelector('.term-window').addEventListener('click', () => termInput.focus());
+</script>
+
+</body>
+</html>
